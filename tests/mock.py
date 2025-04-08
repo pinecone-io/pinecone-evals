@@ -2,8 +2,8 @@
 
 from typing import Dict, List, Any
 
-from .models import Query, SearchHit, EvalScore, EvalResult
-from .client import PineconeEval
+from pinecone_evals.models import Query, SearchHit, EvalScore, EvalResult
+from pinecone_evals.client import PineconeEval
 
 
 class MockPineconeEval(PineconeEval):

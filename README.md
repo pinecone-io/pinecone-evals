@@ -9,10 +9,16 @@ The Pinecone Evals library allows you to evaluate and compare different search c
 - Evaluating those profiles with test queries
 - Comparing performance metrics to identify optimal settings
 
+> **⚠️ Beta Warning**  
+> This library is currently in beta. APIs may change and stability is not guaranteed. Use in production environments at your own risk.
 ## Installation
 
+Install directly from the repository:
+
 ```bash
-pip install pinecone-evals
+git clone https://github.com/pinecone-io/pinecone-evals.git
+cd pinecone-evals
+pip install -e .
 ```
 
 ## Quick Start
@@ -52,6 +58,54 @@ results = evaluator.evaluate_approach(
 # Generate a report
 report = evaluator.generate_report("evaluation_report.md")
 ```
+
+## Creating Your Own Search Implementation
+
+To evaluate your own Pinecone-based search system:
+
+1. Create a search function that connects to your Pinecone index:
+
+```python
+from pinecone_evals import Query, SearchHit, SearchResult
+from pinecone import Pinecone
+
+def pinecone_search(query: Query) -> SearchResult:
+    # Initialize Pinecone and connect to your index
+    pc = Pinecone(api_key="your_api_key")
+    index = pc.Index("your-index-name")
+    
+    # Search the index
+    results = index.search_records(query={"inputs": {"text": query.text}})
+    
+    # Format results as SearchHit objects
+    hits = []
+    for match in results['result']['hits']:
+        hits.append(SearchHit(**match['fields']))
+    
+    return SearchResult(query=query, hits=hits)
+```
+
+2. Define test queries:
+
+```python
+from pinecone_evals import Query
+
+test_queries = [
+    Query(text="how do neural networks work?"),
+    Query(text="what is vector search?")
+]
+```
+
+3. Evaluate your search implementation:
+
+```python
+from pinecone_evals import PineconeEval, SearchEvaluator
+
+evaluator = SearchEvaluator(PineconeEval(api_key="your_api_key"))
+evaluator.evaluate_approach("my_pinecone_search", pinecone_search, test_queries)
+```
+
+For a complete working example, see [examples/custom_search_template.py](examples/custom_search_template.py)
 
 ## Using the Eval API Directly 
 

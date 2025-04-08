@@ -9,7 +9,7 @@ from .models import Query, SearchHit, EvalScore, EvalResult
 class PineconeEval:
     """Client for the Pinecone Evals API."""
 
-    def __init__(self, api_key: str, endpoint: str = "https://api.pinecone.io/eval"):
+    def __init__(self, api_key: str, endpoint: str = "https://api.pinecone.io/evals"):
         """
         Initialize the Pinecone Evals client.
         

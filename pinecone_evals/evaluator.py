@@ -17,7 +17,8 @@ class SearchEvaluator:
     def evaluate_approach(self,
                           name: str,
                           search_fn: Callable[[Query], SearchResult],
-                          queries: List[Query]) -> Dict[str, Any]:
+                          queries: List[Query],
+                          show_progress: bool = True) -> Dict[str, Any]:
         """
         Evaluate a search approach on a set of queries.
 
@@ -25,13 +26,27 @@ class SearchEvaluator:
             name: Name to identify this approach
             search_fn: Function that takes a Query and returns SearchResult
             queries: List of queries to evaluate
+            show_progress: Whether to show a progress bar during evaluation
 
         Returns:
             Dictionary with evaluation metrics
         """
         approach_results = []
+        
+        # Setup progress tracking
+        if show_progress:
+            from tqdm import tqdm
+            query_iterator = tqdm(
+                queries, 
+                desc=f"Evaluating '{name}'", 
+                unit="query",
+                ncols=80
+            )
+        else:
+            query_iterator = queries
 
-        for query in queries:
+        # Process each query
+        for query in query_iterator:
             # Execute the search
             search_result = search_fn(query)
 
@@ -147,6 +162,45 @@ class SearchEvaluator:
                     report.append(f"| \"{query_text}\" | {result.metrics.get('ndcg', 0):.4f} | {result.metrics.get('map', 0):.4f} | {result.metrics.get('mrr', 0):.4f} | {relevant_hits}/{total_hits} |")
             
             report.append("\n")
+        
+        # Add a per-query comparison to show best approach for each query
+        if len(self.results) > 1:
+            report.append("## Best Approach Per Query\n")
+            
+            # Collect all unique queries from all approaches
+            all_queries = {}
+            
+            for approach_name, approach_data in self.results.items():
+                if "detailed_results" in approach_data:
+                    for result in approach_data["detailed_results"]:
+                        query_text = result.query.text
+                        if query_text not in all_queries:
+                            all_queries[query_text] = {}
+                        
+                        # Store this approach's metrics for this query
+                        all_queries[query_text][approach_name] = {
+                            "ndcg": result.metrics.get("ndcg", 0),
+                            "map": result.metrics.get("map", 0),
+                            "mrr": result.metrics.get("mrr", 0)
+                        }
+            
+            # Create a table showing best approach per query
+            report.append("| Query | Best for NDCG | Best for MAP | Best for MRR |")
+            report.append("|-------|--------------|-------------|-------------|")
+            
+            for query_text, approaches in all_queries.items():
+                query_display = query_text[:30] + "..." if len(query_text) > 30 else query_text
+                
+                # Find best approach for each metric
+                best_ndcg = max(approaches.items(), key=lambda x: x[1]["ndcg"])
+                best_map = max(approaches.items(), key=lambda x: x[1]["map"])
+                best_mrr = max(approaches.items(), key=lambda x: x[1]["mrr"])
+                
+                best_ndcg_text = f"**{best_ndcg[0]}** ({best_ndcg[1]['ndcg']:.4f})"
+                best_map_text = f"**{best_map[0]}** ({best_map[1]['map']:.4f})"
+                best_mrr_text = f"**{best_mrr[0]}** ({best_mrr[1]['mrr']:.4f})"
+                
+                report.append(f"| \"{query_display}\" | {best_ndcg_text} | {best_map_text} | {best_mrr_text} |")
 
         report_text = "\n".join(report)
 
