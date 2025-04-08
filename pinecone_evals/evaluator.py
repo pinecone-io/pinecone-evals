@@ -63,7 +63,7 @@ class SearchEvaluator:
                 )
                 return eval_result
             except Exception as e:
-                return {"error": str(e), "query": query.text, "query_id": query.id}
+                return {"error": str(e), "query": query.text}
 
         # Process queries based on mode (async or sequential)
         if async_mode:
@@ -112,7 +112,7 @@ class SearchEvaluator:
                     )
                     approach_results.append(eval_result)
                 except Exception as e:
-                    print(f"Error processing query '{query.text}' (ID: {query.id or 'unknown'}): {str(e)}")
+                    print(f"Error processing query '{query.text}'")
 
         # Aggregate metrics across all queries
         aggregated_metrics = self._aggregate_metrics(approach_results)
