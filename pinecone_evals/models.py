@@ -13,7 +13,7 @@ class Query:
 class SearchHit(Dict[str, Any]):
     """
     Represents a single search result as a dictionary with completely flexible fields.
-    
+
     This is simply a dictionary that can contain any fields needed for a search hit.
     Common fields include 'id' and 'text', but none are required.
     """
@@ -28,19 +28,21 @@ class SearchResult:
 
 
 @dataclass
-class EvalScore:
+class EvalPassage:
     """Evaluation scores for a single hit."""
     index: int
     hit_id: str
     eval_score: int  # 1-4 score
     relevant: bool  # True if score >= 3
+    eval_text: str
+    fields: Dict[str, Any]
     justification: Optional[str] = None
 
 
 @dataclass
-class EvalResult:
+class EvalSearch:
     """Evaluation results for a search query."""
     query: Query
     metrics: Dict[str, float]  # Contains ndcg, map, mrr
-    hit_scores: List[EvalScore]
+    hit_scores: List[EvalPassage]
     usage: Dict[str, int]  # Token usage information

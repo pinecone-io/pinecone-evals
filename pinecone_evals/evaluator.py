@@ -1,10 +1,15 @@
 """Utilities for evaluating and comparing search approaches."""
 
 import statistics
-from typing import Dict, List, Any, Optional, Callable
+import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Any, Callable, Dict, List, Optional, Union
 
-from .models import Query, SearchResult, EvalResult
+from tqdm import tqdm
+
 from .client import PineconeEval
+from .models import EvalSearch, Query, SearchResult
+from .reports import generate_markdown_report, generate_html_report
 
 
 class SearchEvaluator:
@@ -13,35 +18,101 @@ class SearchEvaluator:
     def __init__(self, eval_client: PineconeEval):
         self.eval_client = eval_client
         self.results = {}  # Store results by approach name
+        self.query_set = None  # Will be set when queries are first provided
 
-    def evaluate_approach(self,
-                          name: str,
-                          search_fn: Callable[[Query], SearchResult],
-                          queries: List[Query]) -> Dict[str, Any]:
+    def evaluate_approach(
+            self,
+            name: str,
+            search_fn: Callable[[Query], SearchResult],
+            queries: Union[List[Query]],
+            show_progress: bool = True,
+            async_mode: bool = False,
+            max_workers: int = 4,
+            request_delay: float = 0.1,
+    ) -> Dict[str, Any]:
         """
         Evaluate a search approach on a set of queries.
 
         Args:
             name: Name to identify this approach
             search_fn: Function that takes a Query and returns SearchResult
-            queries: List of queries to evaluate
+            queries: List of queries or QuerySet to evaluate
+            show_progress: Whether to show a progress bar during evaluation
+            async_mode: Whether to process queries in parallel
+            max_workers: Maximum number of parallel workers when async_mode is True
+            request_delay: Delay between requests to respect rate limits (in seconds)
 
         Returns:
             Dictionary with evaluation metrics
         """
+
+        # Use the queries from the QuerySet to ensure consistent IDs
+        query_list = queries
         approach_results = []
 
-        for query in queries:
-            # Execute the search
-            search_result = search_fn(query)
+        # Define function to process a single query
+        def process_query(query):
+            try:
+                # Add delay between requests to respect rate limits
+                time.sleep(request_delay)
+                # Execute the search
+                search_result = search_fn(query)
+                # Evaluate the search result
+                eval_result = self.eval_client.evaluate_search(
+                    query=query, hits=search_result.hits
+                )
+                return eval_result
+            except Exception as e:
+                return {"error": str(e), "query": query.text}
 
-            # Evaluate the search result
-            eval_result = self.eval_client.evaluate_search(
-                query=query,
-                hits=search_result.hits
+        # Process queries based on mode (async or sequential)
+        if async_mode:
+            with ThreadPoolExecutor(max_workers=max_workers) as executor:
+                futures = [executor.submit(process_query, query) for query in query_list]
+
+                if show_progress:
+                    with tqdm(
+                            total=len(query_list),
+                            desc=f"Evaluating '{name}'",
+                            unit="query",
+                            ncols=80,
+                    ) as pbar:
+                        for future in as_completed(futures):
+                            result = future.result()
+                            if isinstance(result, dict) and "error" in result:
+                                print(
+                                    f"Error processing query '{result['query']}' (ID: {result.get('query_id', 'unknown')}): {result['error']}"
+                                )
+                                continue
+                            approach_results.append(result)
+                            pbar.update(1)
+                else:
+                    for future in as_completed(futures):
+                        result = future.result()
+                        if isinstance(result, dict) and "error" in result:
+                            print(
+                                f"Error processing query '{result['query']}' (ID: {result.get('query_id', 'unknown')}): {result['error']}"
+                            )
+                            continue
+                        approach_results.append(result)
+        else:
+            # Sequential processing
+            iterator = (
+                tqdm(query_list, desc=f"Evaluating '{name}'", unit="query", ncols=80)
+                if show_progress
+                else query_list
             )
-
-            approach_results.append(eval_result)
+            for query in iterator:
+                # Execute the search
+                try:
+                    search_result = search_fn(query)
+                    # Evaluate the search result
+                    eval_result = self.eval_client.evaluate_search(
+                        query=query, hits=search_result.hits
+                    )
+                    approach_results.append(eval_result)
+                except Exception as e:
+                    print(f"Error processing query '{query.text}'")
 
         # Aggregate metrics across all queries
         aggregated_metrics = self._aggregate_metrics(approach_results)
@@ -49,12 +120,14 @@ class SearchEvaluator:
         # Store results for later comparison
         self.results[name] = {
             "metrics": aggregated_metrics,
-            "detailed_results": approach_results
+            "detailed_results": approach_results,
         }
 
         return self.results[name]
 
-    def _aggregate_metrics(self, eval_results: List[EvalResult]) -> Dict[str, Dict[str, float]]:
+    def _aggregate_metrics(
+            self, eval_results: List[EvalSearch]
+    ) -> Dict[str, Dict[str, float]]:
         """Aggregate metrics across multiple query results."""
         all_metrics = {}
 
@@ -66,7 +139,9 @@ class SearchEvaluator:
                 "median": statistics.median(metric_values),
                 "min": min(metric_values),
                 "max": max(metric_values),
-                "stddev": statistics.stdev(metric_values) if len(metric_values) > 1 else 0
+                "stddev": statistics.stdev(metric_values)
+                if len(metric_values) > 1
+                else 0,
             }
 
         return all_metrics
@@ -85,73 +160,37 @@ class SearchEvaluator:
             comparison[metric] = {
                 "best_approach": max(
                     self.results.keys(),
-                    key=lambda approach: self.results[approach]["metrics"][metric]["mean"]
+                    key=lambda approach: self.results[approach]["metrics"][metric][
+                        "mean"
+                    ],
                 ),
                 "values": {
                     approach: results["metrics"][metric]["mean"]
                     for approach, results in self.results.items()
-                }
+                },
             }
 
         return comparison
 
-    def generate_report(self, output_file: Optional[str] = None) -> str:
-        """Generate a report of the evaluation results."""
+    def generate_report(
+            self, output_file: Optional[str] = None, format: str = "md"
+    ) -> str:
+        """
+        Generate a report of the evaluation results.
+
+        Args:
+            output_file: Optional file path to write the report to
+            format: Report format, either 'md' (Markdown) or 'html' (HTML)
+
+        Returns:
+            The generated report as a string
+        """
         if not self.results:
             return "No approaches have been evaluated"
 
         comparison = self.compare_approaches()
 
-        report = []
-        report.append("# Search Evaluation Report")
-        report.append("\n## Comparison Summary\n")
-
-        # Create a table of results
-        approaches = list(self.results.keys())
-        metrics = list(next(iter(self.results.values()))["metrics"].keys())
-
-        # Table header
-        report.append("| Metric | " + " | ".join(approaches) + " | Best Approach |")
-        report.append("|--------|" + "|".join(["---------" for _ in approaches]) + "|-------------|")
-
-        # Table rows
-        for metric in metrics:
-            values = [f"{self.results[approach]['metrics'][metric]['mean']:.4f}" for approach in approaches]
-            best = comparison[metric]["best_approach"]
-            report.append(f"| {metric} | " + " | ".join(values) + f" | **{best}** |")
-        
-        # Add detailed per-approach results
-        report.append("\n## Detailed Results\n")
-        
-        for approach_name, approach_data in self.results.items():
-            report.append(f"### {approach_name}\n")
-            
-            # Per-metric detailed stats
-            report.append("| Metric | Mean | Median | Min | Max | StdDev |")
-            report.append("|--------|------|--------|-----|-----|--------|")
-            
-            for metric, stats in approach_data["metrics"].items():
-                report.append(f"| {metric} | {stats['mean']:.4f} | {stats['median']:.4f} | {stats['min']:.4f} | {stats['max']:.4f} | {stats['stddev']:.4f} |")
-            
-            # Add per-query results if available
-            if "detailed_results" in approach_data:
-                report.append("\n#### Per-Query Results\n")
-                report.append("| Query | NDCG | MAP | MRR | Relevant Hits |")
-                report.append("|-------|------|-----|-----|---------------|")
-                
-                for result in approach_data["detailed_results"]:
-                    query_text = result.query.text[:30] + "..." if len(result.query.text) > 30 else result.query.text
-                    relevant_hits = sum(1 for score in result.hit_scores if score.relevant)
-                    total_hits = len(result.hit_scores)
-                    
-                    report.append(f"| \"{query_text}\" | {result.metrics.get('ndcg', 0):.4f} | {result.metrics.get('map', 0):.4f} | {result.metrics.get('mrr', 0):.4f} | {relevant_hits}/{total_hits} |")
-            
-            report.append("\n")
-
-        report_text = "\n".join(report)
-
-        if output_file:
-            with open(output_file, "w") as f:
-                f.write(report_text)
-
-        return report_text
+        if format.lower() == "html":
+            return generate_html_report(self.results, comparison, output_file)
+        else:
+            return generate_markdown_report(self.results, comparison, output_file)

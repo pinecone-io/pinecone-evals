@@ -3,10 +3,12 @@ name = "pinecone-evals"
 version = "0.1.0"
 description = "Evaluation client for Pinecone search configurations"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 dependencies = [
+    "pinecone>=5.4.2",
     "pydantic>=2.10.6",
     "requests>=2.25.0",
+    "tqdm>=4.64.0",
 ]
 
 [project.optional-dependencies]
@@ -24,7 +26,12 @@ build-backend = "setuptools.build_meta"
 
 [tool.ruff]
 line-length = 88
-target-version = "py38"
+target-version = "py39"
 
 [tool.ruff.lint]
 select = ["E", "F", "I"]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.11.4",
+]
