@@ -2,7 +2,7 @@
 
 from typing import Dict, List, Any
 
-from pinecone_evals.models import Query, SearchHit, EvalScore, EvalResult
+from pinecone_evals.models import Query, SearchHit, EvalPassage, EvalSearch
 from pinecone_evals.client import PineconeEval
 
 
@@ -22,7 +22,7 @@ class MockPineconeEval(PineconeEval):
                         query: Query,
                         hits: List[SearchHit],
                         fields: List[str] = None,
-                        debug: bool = False) -> EvalResult:
+                        debug: bool = False) -> EvalSearch:
         """
         Generate a mock evaluation result without making an API call.
 

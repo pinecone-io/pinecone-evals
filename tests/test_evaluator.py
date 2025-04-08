@@ -3,7 +3,7 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
-from pinecone_evals.models import Query, SearchHit, SearchResult, EvalResult, EvalScore
+from pinecone_evals.models import Query, SearchHit, SearchResult, EvalSearch, EvalPassage
 from pinecone_evals.evaluator import SearchEvaluator
 
 
@@ -33,12 +33,12 @@ class TestSearchEvaluator(unittest.TestCase):
         self.mock_search_fn = mock_search
         
         # Mock eval results
-        self.mock_eval_result = EvalResult(
+        self.mock_eval_result = EvalSearch(
             query=self.test_queries[0],
             metrics={"ndcg": 0.8, "map": 0.7, "mrr": 0.9},
             hit_scores=[
-                EvalScore(index=0, hit_id="hit1", eval_score=4, relevant=True),
-                EvalScore(index=1, hit_id="hit2", eval_score=2, relevant=False)
+                EvalPassage(index=0, hit_id="hit1", eval_score=4, relevant=True),
+                EvalPassage(index=1, hit_id="hit2", eval_score=2, relevant=False)
             ],
             usage={"evaluation_input_tokens": 100}
         )
@@ -76,12 +76,12 @@ class TestSearchEvaluator(unittest.TestCase):
         )
         
         # Configure second approach with different metrics
-        self.mock_client.evaluate_search.return_value = EvalResult(
+        self.mock_client.evaluate_search.return_value = EvalSearch(
             query=self.test_queries[0],
             metrics={"ndcg": 0.9, "map": 0.8, "mrr": 0.7},
             hit_scores=[
-                EvalScore(index=0, hit_id="hit1", eval_score=4, relevant=True),
-                EvalScore(index=1, hit_id="hit2", eval_score=4, relevant=True)
+                EvalPassage(index=0, hit_id="hit1", eval_score=4, relevant=True),
+                EvalPassage(index=1, hit_id="hit2", eval_score=4, relevant=True)
             ],
             usage={"evaluation_input_tokens": 100}
         )

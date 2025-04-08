@@ -3,7 +3,7 @@
 import requests
 from typing import Dict, List, Any, Optional
 
-from .models import Query, SearchHit, EvalScore, EvalResult
+from .models import Query, SearchHit, EvalPassage, EvalSearch
 
 
 class PineconeEval:
@@ -29,7 +29,7 @@ class PineconeEval:
                         query: Query,
                         hits: List[SearchHit],
                         fields: Optional[List[str]] = None,
-                        debug: bool = False) -> EvalResult:
+                        debug: bool = True) -> EvalSearch:
         """
         Evaluate the relevance of search results for a given query.
 
@@ -59,7 +59,7 @@ class PineconeEval:
         }
 
         response = self._make_api_call(request_data)
-        return self._parse_response(query, response)
+        return self._parse_response(query, response, fields)
 
     def _make_api_call(self, request_data: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -78,7 +78,7 @@ class PineconeEval:
         response.raise_for_status()
         return response.json()
 
-    def _parse_response(self, query: Query, response: Dict[str, Any]) -> EvalResult:
+    def _parse_response(self, query: Query, response: Dict[str, Any], fields) -> EvalSearch:
         """
         Parse the API response into an EvalResult.
         
@@ -97,16 +97,18 @@ class PineconeEval:
                 hit_id = hit_eval["fields"].get("id", f"hit-{hit_eval['index']}")
             
             hit_scores.append(
-                EvalScore(
+                EvalPassage(
                     index=hit_eval["index"],
                     hit_id=hit_id,
-                    eval_score=hit_eval.get("score", 0),
+                    fields=hit_eval["fields"],
+                    eval_text=hit_eval["fields"][fields[0]],
+                    eval_score=hit_eval.get("score", -1),  # Should be a value between 1-4
                     relevant=hit_eval["relevant"],
                     justification=hit_eval.get("justification")
                 )
             )
 
-        return EvalResult(
+        return EvalSearch(
             query=query,
             metrics=response["metrics"],
             hit_scores=hit_scores,

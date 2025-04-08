@@ -115,9 +115,17 @@ def main():
     comparison = evaluator.compare_approaches()
     print(json.dumps(comparison, indent=2))
 
-    # Generate report
-    report = evaluator.generate_report("search_eval_report.md")
-    print("\nReport generated and saved to search_eval_report.md")
+    # Generate reports in both formats
+    md_report = evaluator.generate_report("search_eval_report.md", format="md")
+    html_report = evaluator.generate_report("search_eval_report.html", format="html")
+    
+    print("\nReports generated and saved to:")
+    print("- search_eval_report.md (Markdown format)")
+    print("- search_eval_report.html (Interactive HTML format with visualizations)")
+    print("\nOpen the HTML report in your browser for an interactive experience with:")
+    print("- Visual performance charts")
+    print("- Search result details with justifications")
+    print("- Interactive query exploration")
 
 
 if __name__ == "__main__":

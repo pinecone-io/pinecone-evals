@@ -2,7 +2,7 @@
 
 import unittest
 
-from pinecone_evals.models import Query, SearchHit, SearchResult, EvalScore, EvalResult
+from pinecone_evals.models import Query, SearchHit, SearchResult, EvalPassage, EvalSearch
 
 
 class TestModels(unittest.TestCase):
@@ -47,7 +47,7 @@ class TestModels(unittest.TestCase):
     
     def test_eval_score(self):
         """Test the EvalScore model."""
-        score = EvalScore(
+        score = EvalPassage(
             index=0,
             hit_id="test_id",
             eval_score=4,
@@ -67,13 +67,13 @@ class TestModels(unittest.TestCase):
         metrics = {"ndcg": 0.8, "map": 0.7, "mrr": 0.9}
         
         hit_scores = [
-            EvalScore(index=0, hit_id="hit1", eval_score=4, relevant=True),
-            EvalScore(index=1, hit_id="hit2", eval_score=2, relevant=False)
+            EvalPassage(index=0, hit_id="hit1", eval_score=4, relevant=True),
+            EvalPassage(index=1, hit_id="hit2", eval_score=2, relevant=False)
         ]
         
         usage = {"evaluation_input_tokens": 100}
         
-        result = EvalResult(
+        result = EvalSearch(
             query=query,
             metrics=metrics,
             hit_scores=hit_scores,
