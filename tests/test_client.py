@@ -19,7 +19,7 @@ class TestPineconeEvalClient(unittest.TestCase):
         self.test_query = Query(text="test query")
         self.test_hits = [
             {"id": "hit1", "text": "Test hit 1"},
-            {"id": "hit2", "text": "Test hit 2"}
+            {"id": "hit2", "text": "Test hit 2"},
         ]
 
         # Mock API response
@@ -27,34 +27,21 @@ class TestPineconeEvalClient(unittest.TestCase):
             "hits": [
                 {
                     "index": 0,
-                    "fields": {
-                        "id": "hit1",
-                        "text": "Test hit 1"
-                    },
+                    "fields": {"id": "hit1", "text": "Test hit 1"},
                     "relevant": True,
                     "score": 4,
-                    "justification": "Test justification"
+                    "justification": "Test justification",
                 },
                 {
                     "index": 1,
-                    "fields": {
-                        "id": "hit2",
-                        "text": "Test hit 2"
-                    },
+                    "fields": {"id": "hit2", "text": "Test hit 2"},
                     "relevant": False,
                     "score": 2,
-                    "justification": "Test justification"
-                }
+                    "justification": "Test justification",
+                },
             ],
-            "metrics": {
-                "ndcg": 0.8,
-                "map": 0.7,
-                "mrr": 0.9
-            },
-            "usage": {
-                "evaluation_input_tokens": 100,
-                "evaluation_output_tokens": 50
-            }
+            "metrics": {"ndcg": 0.8, "map": 0.7, "mrr": 0.9},
+            "usage": {"evaluation_input_tokens": 100, "evaluation_output_tokens": 50},
         }
 
     @patch("requests.Session.post")
@@ -66,10 +53,7 @@ class TestPineconeEvalClient(unittest.TestCase):
         mock_post.return_value = mock_response
 
         # Call the method under test
-        result = self.client.evaluate_search(
-            query=self.test_query,
-            hits=self.test_hits
-        )
+        result = self.client.evaluate_search(query=self.test_query, hits=self.test_hits)
 
         # Verify the API was called with correct data
         mock_post.assert_called_once()
@@ -103,16 +87,18 @@ class TestMockPineconeEvalClient(unittest.TestCase):
         # Sample test data for general testing
         self.test_query = Query(text="specific unique phrase")
         self.test_hits = [
-            {"id": "hit1", "text": "Document containing the specific unique phrase we're looking for"},
-            {"id": "hit2", "text": "Document without any matching terms"}
+            {
+                "id": "hit1",
+                "text": "Document containing the specific unique phrase we're looking for",
+            },
+            {"id": "hit2", "text": "Document without any matching terms"},
         ]
 
     def test_mock_evaluate_search(self):
         """Test the mock evaluation functionality."""
         # Call the method under test
         result = self.mock_client.evaluate_search(
-            query=self.test_query,
-            hits=self.test_hits
+            query=self.test_query, hits=self.test_hits
         )
 
         # Verify the result structure
@@ -120,7 +106,9 @@ class TestMockPineconeEvalClient(unittest.TestCase):
         self.assertEqual(len(result.hit_scores), 2)
 
         # Verify relevance determination
-        self.assertTrue(result.hit_scores[0].relevant)  # Should be relevant due to keyword match
+        self.assertTrue(
+            result.hit_scores[0].relevant
+        )  # Should be relevant due to keyword match
         self.assertFalse(result.hit_scores[1].relevant)  # Should not be relevant
 
         # Verify metrics exist
@@ -137,7 +125,7 @@ class TestMockPineconeEvalClient(unittest.TestCase):
         # Create hits with more specific text content for better testing
         specific_hits = [
             {"id": "hit1", "text": "This is about machine learning algorithms"},
-            {"id": "hit2", "text": "Document about databases and data storage"}
+            {"id": "hit2", "text": "Document about databases and data storage"},
         ]
 
         # Query that should only match the first hit
@@ -164,13 +152,13 @@ class TestMockPineconeEvalClient(unittest.TestCase):
                 "id": "hit1",
                 "text": "Main content text",
                 "title": "Important document title",
-                "metadata": {"author": "John Doe", "year": 2023}
+                "metadata": {"author": "John Doe", "year": 2023},
             },
             {
                 "id": "hit2",
                 "chunk_text": "This is alternative text field",
-                "custom_field": "Custom value"
-            }
+                "custom_field": "Custom value",
+            },
         ]
 
         # Query that should match custom fields
