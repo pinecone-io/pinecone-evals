@@ -12,7 +12,6 @@ from .models import (
     SearchResult,
     EvalPassage,
     EvalSearch,
-    HitScore,
 )
 
 __version__ = "0.1.0"
