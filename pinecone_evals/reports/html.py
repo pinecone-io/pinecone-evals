@@ -1,6 +1,6 @@
 from typing import Dict, Any, Optional
 
-from pinecone_evals.reports import _generate_html_header, _generate_executive_summary, _generate_charts_section, _generate_approach_tabs, _generate_approach_content, _generate_best_approach_per_query, _generate_javascript
+from pinecone_evals.reports.html_utils import _generate_html_header, _generate_executive_summary, _generate_charts_section, _generate_approach_tabs, _generate_approach_content, _generate_best_approach_per_query, _generate_javascript
 
 
 def generate_html_report(

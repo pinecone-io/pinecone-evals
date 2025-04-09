@@ -112,27 +112,5 @@ def _generate_approach_content(
     return html_parts
 
 
-def _generate_hit_score(index: int, hit_score: Any) -> List[str]:
-    """Generate HTML for a hit score."""
-    justification = hit_score.justification
-    relevant_class = "relevant" if hit_score.relevant else "not-relevant"
-
-    return [
-        f'                                    <div class="hit {relevant_class} p-3">',
-        '                                        <div class="flex justify-between items-center mb-2">',
-        f'                                            <span class="font-medium text-gray-800">Result #{index + 1} · ID: {escape(str(hit_score.hit_id))}</span>',
-        f'                                            <span class="text-sm px-2 py-1 rounded-full {" bg-green-100 text-green-800" if hit_score.relevant else " bg-red-100 text-red-800"}">',
-        f"                                                Score: {hit_score.eval_score}/4 · {'Relevant' if hit_score.relevant else 'Not Relevant'}",
-        "                                            </span>",
-        "                                        </div>",
-        # Content with styled text
-        f'                                        <div class="mt-2 p-3 bg-white rounded border border-gray-200 text-gray-800">{escape(str(hit_score.eval_text))}</div>',
-        # Justification with explanatory note
-        '                                        <div class="mt-2 text-sm">',
-        '                                            <span class="font-medium text-gray-700">Evaluation justification:</span>',
-        f'                                            <div class="mt-1 pl-3 border-l-2 border-gray-300 text-gray-600">{escape(str(justification))}</div>',
-        "                                        </div>",
-        "                                    </div>",
-    ]
 
 
