@@ -1,5 +1,7 @@
 # pinecone-evals
 Experimental Python client for Pinecone Evaluation API
+> **⚠️ Beta Warning**  
+> This library is currently in beta. APIs may change and stability is not guaranteed. Use in production environments at your own risk.
 
 ## Overview
 
@@ -9,8 +11,12 @@ The Pinecone Evals library allows you to evaluate and compare different search c
 - Evaluating those profiles with test queries
 - Comparing performance metrics to identify optimal settings
 
-> **⚠️ Beta Warning**  
-> This library is currently in beta. APIs may change and stability is not guaranteed. Use in production environments at your own risk.
+## Report Visualization
+
+The library generates interactive HTML reports comparing different search approaches:
+
+![Evaluation Report](docs/report-screenshot.png)
+
 ## Installation
 
 Install directly from the repository:
