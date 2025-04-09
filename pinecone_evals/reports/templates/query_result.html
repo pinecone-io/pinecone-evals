@@ -10,9 +10,9 @@
 </span>
 {% endmacro %}
 
-<div class="border rounded-lg overflow-hidden">
-    <div class="flex items-center justify-between bg-gray-50 px-4 py-3 cursor-pointer"
-         onclick="toggleQueryDetails('{{ approach_name }}-query-{{ loop.index }}')">
+<div class="border rounded-lg overflow-hidden query-container">
+    <div class="flex items-center justify-between bg-gray-50 px-4 py-3 cursor-pointer query-header"
+         onclick="toggleDetailsDirect(this)">
         <div>
             <span class="font-medium">{{ result.query.text }}</span>
             <span class="ml-3">
@@ -28,26 +28,14 @@
         </svg>
     </div>
     
-    <div id="{{ approach_name }}-query-{{ loop.index }}" class="px-4 py-3 border-t hidden">
+    <div class="px-4 py-3 border-t hidden query-details">
         <div class="mb-4">
             <h5 class="font-medium text-sm mb-1">Retrieved Documents</h5>
-            <div class="mt-2 mb-3">
-                <div class="flex">
-                    <button class="bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded-l-md text-xs font-medium" 
-                            onclick="sortDocuments('{{ approach_name }}-query-{{ loop.index }}', 'position')">Position</button>
-                    <button class="bg-gray-200 hover:bg-gray-300 px-3 py-1 text-xs font-medium"
-                            onclick="sortDocuments('{{ approach_name }}-query-{{ loop.index }}', 'score')">Score</button>
-                    <button class="bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded-r-md text-xs font-medium"
-                            onclick="sortDocuments('{{ approach_name }}-query-{{ loop.index }}', 'relevance')">Relevance</button>
-                </div>
-            </div>
-            <div class="space-y-2" id="{{ approach_name }}-query-{{ loop.index }}-docs">
+            <div class="space-y-2">
                 {% for hit in result.hit_scores %}
                 {% set is_relevant = hit.relevant if hit.relevant is defined else false %}
                 <div class="p-3 {% if is_relevant %}bg-green-50{% else %}bg-gray-50{% endif %} rounded-lg" 
-                     data-position="{{ loop.index0 }}" 
-                     data-score="{{ hit.eval_score }}"
-                     data-relevance="{{ 1 if is_relevant else 0 }}">
+                     data-position="{{ loop.index0 }}">
                     <div class="flex justify-between mb-1">
                         <div class="flex items-center">
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-200 text-gray-800 mr-2" title="Position in search results">

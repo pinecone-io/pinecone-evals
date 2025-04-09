@@ -2,14 +2,12 @@
 {% from "executive_summary.html" import executive_summary %}
 {% from "charts.html" import charts_section %}
 {% from "approach_tabs.html" import approach_tabs %}
-{% from "best_query.html" import best_approach_per_query %}
 {% from "javascript.html" import render_javascript %}
 
 {% block content %}
 {{ executive_summary(results, comparison) }}
 {{ charts_section() }}
 {{ approach_tabs(approaches, results) }}
-{{ best_approach_per_query(results) }}
 {% endblock %}
 
 {% block javascript %}

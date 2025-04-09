@@ -23,35 +23,27 @@
         document.querySelector(`[onclick="showTab('${tabName}')"]`).classList.add('active');
     }
     
-    // Toggle query details
-    function toggleQueryDetails(queryId) {
-        const detailsEl = document.getElementById(queryId);
-        detailsEl.classList.toggle('hidden');
-    }
-    
-    // Sort documents in a query results panel
-    function sortDocuments(queryId, sortBy) {
-        const docsContainer = document.getElementById(`${queryId}-docs`);
-        const docs = Array.from(docsContainer.children);
+    // Toggle query details using direct DOM relationship
+    function toggleDetailsDirect(headerElement) {
+        // Get the container and details element
+        const container = headerElement.closest('.query-container');
+        const detailsEl = container.querySelector('.query-details');
+        const isCurrentlyHidden = detailsEl.classList.contains('hidden');
         
-        docs.sort((a, b) => {
-            if (sortBy === 'position') {
-                return parseInt(a.dataset.position) - parseInt(b.dataset.position);
-            } else if (sortBy === 'score') {
-                return parseFloat(b.dataset.score) - parseFloat(a.dataset.score);
-            } else if (sortBy === 'relevance') {
-                return parseFloat(b.dataset.relevance) - parseFloat(a.dataset.relevance);
-            }
-            return 0;
+        // Hide all details panels first
+        document.querySelectorAll('.query-details').forEach(el => {
+            el.classList.add('hidden');
         });
         
-        // Remove all docs
-        while (docsContainer.firstChild) {
-            docsContainer.removeChild(docsContainer.firstChild);
+        // If the clicked panel was hidden, show it (toggle behavior)
+        if (isCurrentlyHidden) {
+            detailsEl.classList.remove('hidden');
         }
-        
-        // Re-append in sorted order
-        docs.forEach(doc => docsContainer.appendChild(doc));
+    }
+    
+    // Keep old function for backward compatibility
+    function toggleQueryDetails(queryId) {
+        console.log("toggleQueryDetails is deprecated");
     }
     
     // Show best results for a specific approach and metric
@@ -82,14 +74,6 @@
             <div class="mb-4">
                 <div class="flex justify-between items-center mb-2">
                     <h4 class="font-medium">Retrieved Documents</h4>
-                    <div class="flex">
-                        <button class="bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded-l-md text-xs font-medium" 
-                                onclick="sortModalDocuments('position')">Position</button>
-                        <button class="bg-gray-200 hover:bg-gray-300 px-3 py-1 text-xs font-medium"
-                                onclick="sortModalDocuments('score')">Score</button>
-                        <button class="bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded-r-md text-xs font-medium"
-                                onclick="sortModalDocuments('relevance')">Relevance</button>
-                    </div>
                 </div>
                 <div class="space-y-2" id="modal-docs">`;
         
@@ -136,40 +120,17 @@
         contentEl.innerHTML = html;
         modal.classList.remove('hidden');
     }
-    
-    // Sort documents in the modal
-    function sortModalDocuments(sortBy) {
-        const docsContainer = document.getElementById('modal-docs');
-        const docs = Array.from(docsContainer.children);
-        
-        docs.sort((a, b) => {
-            if (sortBy === 'position') {
-                return parseInt(a.dataset.position) - parseInt(b.dataset.position);
-            } else if (sortBy === 'score') {
-                return parseFloat(b.dataset.score) - parseFloat(a.dataset.score);
-            } else if (sortBy === 'relevance') {
-                return parseFloat(b.dataset.relevance) - parseFloat(a.dataset.relevance);
-            }
-            return 0;
-        });
-        
-        // Remove all docs
-        while (docsContainer.firstChild) {
-            docsContainer.removeChild(docsContainer.firstChild);
-        }
-        
-        // Re-append in sorted order
-        docs.forEach(doc => docsContainer.appendChild(doc));
-    }
+
     
     // Create shared legend
     function createSharedLegend(approaches) {
         const legendContainer = document.getElementById('chart-legend');
         const legendHtml = approaches.map(approach => {
             const color = colorMap[approach].border;
+            // Keep full approach name in legend (for tooltip) but limit display width
             return `<div class='flex items-center mx-2'>
                       <span class='inline-block w-4 h-4 mr-2' style='background-color: ${color}'></span>
-                      <span class='text-sm'>${approach}</span>
+                      <span class='text-sm max-w-[130px] truncate' title='${approach}'>${approach}</span>
                    </div>`;
         }).join('');
         legendContainer.innerHTML = legendHtml;
@@ -212,7 +173,12 @@
                 },
                 y: {
                     ticks: {
-                        crossAlign: 'far'
+                        crossAlign: 'far',
+                        callback: function(value, index) {
+                            const label = this.getLabelForValue(value);
+                            // Truncate approach names to a max width of 15 characters
+                            return label.length > 15 ? label.substring(0, 12) + '...' : label;
+                        }
                     }
                 }
             }
