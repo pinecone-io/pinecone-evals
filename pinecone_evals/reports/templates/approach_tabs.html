@@ -1,0 +1,55 @@
+{% macro approach_tabs(approaches, results) %}
+<div class="bg-white rounded-lg shadow mb-8">
+    <div class="flex overflow-x-auto border-b">
+        {% for approach in approaches %}
+        <button class="approach-tab px-6 py-3 font-medium{% if loop.first %} active{% endif %}" 
+                onclick="showTab('{{ approach }}')">{{ approach }}</button>
+        {% endfor %}
+    </div>
+    <div class="p-6">
+        {% for approach_name, approach_data in results.items() %}
+        <div id="{{ approach_name }}-tab" class="tab-content{% if loop.first %} active{% endif %}">
+            <h3 class="text-lg font-semibold mb-4">{{ approach_name }}</h3>
+            
+            <!-- Metrics table -->
+            <div class="overflow-x-auto mb-6">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead>
+                        <tr>
+                            <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Metric</th>
+                            <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mean</th>
+                            <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Median</th>
+                            <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Min</th>
+                            <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Max</th>
+                            <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">StdDev</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for metric, stats in approach_data.metrics.items() %}
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ metric }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ "%.4f"|format(stats.mean) }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ "%.4f"|format(stats.median) }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ "%.4f"|format(stats.min) }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ "%.4f"|format(stats.max) }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ "%.4f"|format(stats.stddev) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Per-query results with expandable details -->
+            {% if approach_data.detailed_results %}
+            <h4 class="text-md font-semibold mb-2">Query Results</h4>
+            <div class="space-y-4">
+                {% for result in approach_data.detailed_results %}
+                {% include "query_result.html" %}
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endmacro %}

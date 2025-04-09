@@ -1,0 +1,26 @@
+{% macro executive_summary(results, comparison) %}
+<div class="bg-white rounded-lg shadow p-6 mb-8">
+    <h2 class="text-xl font-semibold mb-4">Executive Summary</h2>
+    
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {% for metric_name, metric_data in comparison.items() %}
+        <div class="bg-gray-50 p-4 rounded-lg">
+            <h3 class="text-lg font-medium mb-2">{{ metric_name | upper }}</h3>
+            <p class="mb-2">Best Approach: <span class="font-semibold">{{ metric_data.best_approach }}</span></p>
+            <p>Score: <span class="font-semibold">{{ "%.4f"|format(metric_data.best_value) }}</span></p>
+            
+            <div class="mt-4">
+                <p class="text-sm text-gray-500 mb-2">All Approaches:</p>
+                <ul class="space-y-1">
+                    {% for approach, value in metric_data.all_values.items() %}
+                    <li class="text-sm">
+                        {{ approach }}: {{ "%.4f"|format(value) }}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endmacro %}

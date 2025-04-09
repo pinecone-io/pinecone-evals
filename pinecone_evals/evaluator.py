@@ -21,14 +21,14 @@ class SearchEvaluator:
         self.query_set = None  # Will be set when queries are first provided
 
     def evaluate_approach(
-            self,
-            name: str,
-            search_fn: Callable[[Query], SearchResult],
-            queries: Union[List[Query]],
-            show_progress: bool = True,
-            async_mode: bool = False,
-            max_workers: int = 4,
-            request_delay: float = 0.1,
+        self,
+        name: str,
+        search_fn: Callable[[Query], SearchResult],
+        queries: Union[List[Query]],
+        show_progress: bool = True,
+        async_mode: bool = False,
+        max_workers: int = 4,
+        request_delay: float = 0.1,
     ) -> Dict[str, Any]:
         """
         Evaluate a search approach on a set of queries.
@@ -68,14 +68,16 @@ class SearchEvaluator:
         # Process queries based on mode (async or sequential)
         if async_mode:
             with ThreadPoolExecutor(max_workers=max_workers) as executor:
-                futures = [executor.submit(process_query, query) for query in query_list]
+                futures = [
+                    executor.submit(process_query, query) for query in query_list
+                ]
 
                 if show_progress:
                     with tqdm(
-                            total=len(query_list),
-                            desc=f"Evaluating '{name}'",
-                            unit="query",
-                            ncols=80,
+                        total=len(query_list),
+                        desc=f"Evaluating '{name}'",
+                        unit="query",
+                        ncols=80,
                     ) as pbar:
                         for future in as_completed(futures):
                             result = future.result()
@@ -126,7 +128,7 @@ class SearchEvaluator:
         return self.results[name]
 
     def _aggregate_metrics(
-            self, eval_results: List[EvalSearch]
+        self, eval_results: List[EvalSearch]
     ) -> Dict[str, Dict[str, float]]:
         """Aggregate metrics across multiple query results."""
         all_metrics = {}
@@ -157,14 +159,16 @@ class SearchEvaluator:
         metric_names = next(iter(self.results.values()))["metrics"].keys()
 
         for metric in metric_names:
+            best_approach = max(
+                self.results.keys(),
+                key=lambda approach: self.results[approach]["metrics"][metric]["mean"],
+            )
+            best_value = self.results[best_approach]["metrics"][metric]["mean"]
+            
             comparison[metric] = {
-                "best_approach": max(
-                    self.results.keys(),
-                    key=lambda approach: self.results[approach]["metrics"][metric][
-                        "mean"
-                    ],
-                ),
-                "values": {
+                "best_approach": best_approach,
+                "best_value": best_value,
+                "all_values": {
                     approach: results["metrics"][metric]["mean"]
                     for approach, results in self.results.items()
                 },
@@ -173,7 +177,7 @@ class SearchEvaluator:
         return comparison
 
     def generate_report(
-            self, output_file: Optional[str] = None, format: str = "md"
+        self, output_file: Optional[str] = None, format: str = "md"
     ) -> str:
         """
         Generate a report of the evaluation results.

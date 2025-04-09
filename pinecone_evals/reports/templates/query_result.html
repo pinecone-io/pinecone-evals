@@ -1,0 +1,52 @@
+{% macro hit_score(score, hit_position=None) %}
+{% set color_class = "" %}
+{% if score >= 0.8 %}
+    {% set color_class = "bg-green-100 text-green-800" %}
+{% elif score >= 0.5 %}
+    {% set color_class = "bg-blue-100 text-blue-800" %}
+{% elif score >= 0.1 %}
+    {% set color_class = "bg-yellow-100 text-yellow-800" %}
+{% else %}
+    {% set color_class = "bg-red-100 text-red-800" %}
+{% endif %}
+
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ color_class }}">
+    {% if hit_position is not none %}{{ hit_position + 1 }}. {% endif %}{{ "%.2f"|format(score) }}
+</span>
+{% endmacro %}
+
+<div class="border rounded-lg overflow-hidden">
+    <div class="flex items-center justify-between bg-gray-50 px-4 py-3 cursor-pointer"
+         onclick="toggleQueryDetails('{{ approach_name }}-query-{{ loop.index }}')">
+        <div>
+            <span class="font-medium">{{ result.query.text }}</span>
+            <span class="ml-3">
+                {% for metric_name, metric_value in result.metrics.items() %}
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 mr-1">
+                    {{ metric_name }}: {{ "%.4f"|format(metric_value) }}
+                </span>
+                {% endfor %}
+            </span>
+        </div>
+        <svg class="h-5 w-5 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+        </svg>
+    </div>
+    
+    <div id="{{ approach_name }}-query-{{ loop.index }}" class="px-4 py-3 border-t hidden">
+        <div class="mb-4">
+            <h5 class="font-medium text-sm mb-1">Retrieved Documents</h5>
+            <div class="space-y-2">
+                {% for hit in result.hit_scores %}
+                <div class="p-3 bg-gray-50 rounded-lg">
+                    <div class="flex justify-between mb-1">
+                        <span class="text-sm font-medium">{{ hit.hit_id }}</span>
+                        {{ hit_score(hit.eval_score / 4.0, loop.index0) }}
+                    </div>
+                    <p class="text-sm text-gray-700">{{ hit.eval_text }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>

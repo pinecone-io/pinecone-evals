@@ -1,0 +1,17 @@
+{% macro charts_section() %}
+<div class="bg-white rounded-lg shadow p-6 mb-8">
+    <h2 class="text-xl font-semibold mb-4">Comparison Charts</h2>
+    <div id="chart-legend" class="flex justify-center mb-4"></div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="h-80">
+            <canvas id="ndcgChart"></canvas>
+        </div>
+        <div class="h-80">
+            <canvas id="mapChart"></canvas>
+        </div>
+        <div class="h-80">
+            <canvas id="mrrChart"></canvas>
+        </div>
+    </div>
+</div>
+{% endmacro %}

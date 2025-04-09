@@ -7,6 +7,7 @@ This script shows how to:
 2. Evaluate them against test queries
 3. Generate a visual HTML report of the results
 """
+
 import os
 
 from pinecone import Pinecone
@@ -25,7 +26,7 @@ def main():
     # Initialize Pinecone
     pc = Pinecone(api_key=api_key)
     index = pc.Index("wikipedia")
-    
+
     # Initialize the evaluation system
     eval_client = PineconeEval(api_key=api_key)
     evaluator = SearchEvaluator(eval_client)
@@ -41,11 +42,11 @@ def main():
     # 1. Basic semantic search
     def run_basic_search(query):
         return semantic_search(index, query)
-    
+
     # 2. Semantic search with Cohere reranking
     def run_cohere_search(query):
         return semantic_search_rerank(index, query, "cohere-rerank-3.5")
-    
+
     # 3. Semantic search with BGE reranking
     def run_bge_search(query):
         return semantic_search_rerank(index, query, "bge-reranker-v2-m3")
@@ -55,15 +56,15 @@ def main():
     evaluator.evaluate_approach(
         "basic_semantic_search", run_basic_search, test_queries, async_mode=True
     )
-    
+
     evaluator.evaluate_approach(
         "cohere_reranking", run_cohere_search, test_queries, async_mode=True
     )
-    
+
     evaluator.evaluate_approach(
         "bge_reranking", run_bge_search, test_queries, async_mode=True
     )
-    
+
     # Generate HTML report with results
     print("Generating HTML report...")
     evaluator.generate_report("run_evals.html", "html")

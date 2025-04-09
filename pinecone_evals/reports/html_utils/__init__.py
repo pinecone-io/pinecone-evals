@@ -1,5 +1,0 @@
-from .generate_executive_summary import _generate_executive_summary
-from .generate_header import _generate_html_header
-from .generate_query_result import (_generate_query_result, _generate_hit_score, _generate_best_approach_per_query)
-from .javascript_utils import _generate_javascript
-from .misc import _generate_charts_section, _generate_approach_tabs, _generate_approach_content, _generate_query_result

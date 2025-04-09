@@ -1,6 +1,8 @@
-from typing import Dict, Any, Optional
+import json
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
-from pinecone_evals.reports.html_utils import _generate_html_header, _generate_executive_summary, _generate_charts_section, _generate_approach_tabs, _generate_approach_content, _generate_best_approach_per_query, _generate_javascript
+from jinja2 import Environment, FileSystemLoader
 
 
 def generate_html_report(
@@ -20,41 +22,30 @@ def generate_html_report(
     """
     approaches = list(results.keys())
 
-    # Build the HTML report by combining sections
-    html_parts = []
+    # Setup Jinja2 environment
+    template_dir = Path(__file__).parent / "templates"
+    env = Environment(loader=FileSystemLoader(template_dir))
 
-    # Add header section
-    html_parts.extend(_generate_html_header())
+    # Add custom filter to convert Python objects to JSON strings
+    env.filters["tojson"] = lambda obj: json.dumps(obj)
 
-    # Add executive summary section
-    html_parts.extend(_generate_executive_summary(results, comparison))
+    # Prepare data for charts
+    chart_data = _prepare_chart_data(results)
+    color_map = _prepare_color_map(approaches)
 
-    # Add charts section
-    html_parts.extend(_generate_charts_section())
+    # Prepare data for best approaches per query
+    best_approaches = _prepare_best_approaches(results)
 
-    # Add approach tabs navigation
-    html_parts.extend(_generate_approach_tabs(approaches))
-
-    # Add approach content sections
-    html_parts.append('            <div class="p-6">')
-
-    for i, approach_name in enumerate(approaches):
-        approach_data = results[approach_name]
-        html_parts.extend(
-            _generate_approach_content(approach_name, approach_data, i == 0)
-        )
-
-    html_parts.append("            </div>")
-    html_parts.append("        </div>")
-
-    # Add best approach per query comparison
-    html_parts.extend(_generate_best_approach_per_query(results))
-
-    # Add JavaScript for interactivity
-    html_parts.extend(_generate_javascript(results))
-
-    # Combine parts into complete HTML document
-    html_report = "\n".join(html_parts)
+    # Render template with data
+    template = env.get_template("report.html")
+    html_report = template.render(
+        results=results,
+        comparison=comparison,
+        approaches=approaches,
+        chart_data=chart_data,
+        color_map=color_map,
+        best_approaches=best_approaches,
+    )
 
     # Write to file if output_file is specified
     if output_file:
@@ -66,3 +57,86 @@ def generate_html_report(
             f.write(html_report)
 
     return html_report
+
+
+def _prepare_chart_data(results: Dict[str, Any]) -> Dict[str, Any]:
+    """Prepare data for charts."""
+    approaches = list(results.keys())
+    metrics = list(next(iter(results.values()))["metrics"].keys())
+
+    chart_data = {}
+    for metric in metrics:
+        metric_values = [
+            results[approach]["metrics"][metric]["mean"] for approach in approaches
+        ]
+        chart_data[metric] = {
+            "labels": approaches,
+            "values": metric_values,
+            "best_approach": approaches[metric_values.index(max(metric_values))],
+            "best_value": max(metric_values),
+        }
+
+    return chart_data
+
+
+def _prepare_color_map(approaches: List[str]) -> Dict[str, Dict[str, str]]:
+    """Prepare color mapping for approaches."""
+    colors = [
+        "rgb(79, 70, 229)",  # Indigo
+        "rgb(16, 185, 129)",  # Green
+        "rgb(245, 158, 11)",  # Amber
+        "rgb(239, 68, 68)",  # Red
+        "rgb(59, 130, 246)",  # Blue
+        "rgb(217, 70, 239)",  # Purple
+        "rgb(20, 184, 166)",  # Teal
+        "rgb(232, 121, 249)",  # Fuchsia
+    ]
+
+    color_map = {}
+    for i, approach in enumerate(approaches):
+        color_index = i % len(colors)
+        color_map[approach] = {
+            "fill": colors[color_index].replace("rgb", "rgba").replace(")", ", 0.6)"),
+            "border": colors[color_index],
+        }
+
+    return color_map
+
+
+def _prepare_best_approaches(results: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Prepare data for best approach per query section."""
+    approaches = list(results.keys())
+
+    # Find a result with detailed_results to get queries
+    detailed_approach = next(
+        (app for app in approaches if "detailed_results" in results[app]), None
+    )
+
+    if not detailed_approach:
+        return []
+
+    queries = [r.query.text for r in results[detailed_approach]["detailed_results"]]
+
+    best_approaches = []
+    for i, query in enumerate(queries):
+        query_data = {"query": query}
+
+        for metric in ["ndcg", "map", "mrr"]:
+            best_score = -1
+            best_approach = ""
+
+            for approach in approaches:
+                if "detailed_results" not in results[approach]:
+                    continue
+
+                metrics_dict = results[approach]["detailed_results"][i].metrics
+                approach_score = metrics_dict.get(metric, 0)
+                if approach_score > best_score:
+                    best_score = approach_score
+                    best_approach = approach
+
+            query_data[metric] = {"approach": best_approach, "score": best_score}
+
+        best_approaches.append(query_data)
+
+    return best_approaches
