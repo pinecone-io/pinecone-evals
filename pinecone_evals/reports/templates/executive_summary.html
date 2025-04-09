@@ -24,14 +24,14 @@
                 </span>
             </h3>
             <p class="mb-2">Best Approach: <span class="font-semibold">{{ metric_data.best_approach }}</span></p>
-            <p>Score: <span class="font-semibold">{{ "%.4f"|format(metric_data.best_value) }}</span></p>
+            <p>Score: <span class="font-semibold">{{ "%.2f"|format(metric_data.best_value) }}</span></p>
             
             <div class="mt-4">
                 <p class="text-sm text-gray-500 mb-2">All Approaches:</p>
                 <ul class="space-y-1">
                     {% for approach, value in metric_data.all_values.items() %}
                     <li class="text-sm">
-                        {{ approach }}: {{ "%.4f"|format(value) }}
+                        {{ approach }}: {{ "%.2f"|format(value) }}
                     </li>
                     {% endfor %}
                 </ul>

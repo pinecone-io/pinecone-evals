@@ -18,7 +18,7 @@
             <span class="ml-3">
                 {% for metric_name, metric_value in result.metrics.items() %}
                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 mr-1">
-                    {{ metric_name }}: {{ "%.4f"|format(metric_value) }}
+                    {{ metric_name }}: {{ "%.2f"|format(metric_value) }}
                 </span>
                 {% endfor %}
             </span>
