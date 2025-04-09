@@ -1,4 +1,5 @@
 # pinecone-evals
+
 Experimental Python client for Pinecone Evaluation API
 > **⚠️ Beta Warning**  
 > This library is currently in beta. APIs may change and stability is not guaranteed. Use in production environments at your own risk.
@@ -10,6 +11,12 @@ The Pinecone Evals library allows you to evaluate and compare different search c
 - Creating search profiles with different configurations
 - Evaluating those profiles with test queries
 - Comparing performance metrics to identify optimal settings
+
+The library calculates the following metrics:
+
+- **NDCG (Normalized Discounted Cumulative Gain)**: Measures ranking quality
+- **MAP (Mean Average Precision)**: Evaluates precision at different recall levels
+- **MRR (Mean Reciprocal Rank)**: Measures position of first relevant result
 
 ## Report Visualization
 
@@ -50,6 +57,7 @@ test_queries = [
     Query(text="best practices for vector search")
 ]
 
+
 # Define your search function
 def my_search_function(query: Query) -> SearchResult:
     # This would call your actual search API
@@ -60,10 +68,11 @@ def my_search_function(query: Query) -> SearchResult:
     ]
     return SearchResult(query=query, hits=hits)
 
+
 # Evaluate the search approach
 results = evaluator.evaluate_approach(
-    name="my_approach", 
-    search_fn=my_search_function, 
+    name="my_approach",
+    search_fn=my_search_function,
     queries=test_queries
 )
 
@@ -84,18 +93,18 @@ from pinecone import Pinecone
 pc = Pinecone(api_key="your_api_key")
 index = pc.Index("your-index-name")
 
-    
+
 def pinecone_search(query: Query) -> SearchResult:
     # Initialize Pinecone and connect to your index
-    
+
     # Search the index
     results = index.search_records(query={"inputs": {"text": query.text}})
-    
+
     # Format results as SearchHit objects
     hits = []
     for match in results['result']['hits']:
         hits.append(SearchHit(**match['fields']))
-    
+
     return SearchResult(query=query, hits=hits)
 ```
 
@@ -123,7 +132,7 @@ evaluator.generate_report("run_evals.html", format="html")
 
 For a complete working example, see [examples/custom_search_template.py](examples/custom_search_template.py)
 
-## Using the Eval API Directly 
+## Using the Eval API Directly
 
 The library uses Pinecone's evaluation API to assess search results:
 
@@ -154,22 +163,3 @@ curl -X POST https://api.pinecone.io/evals \
   }'
 ```
 
-## Available Metrics
-
-The library calculates the following metrics:
-
-- **NDCG (Normalized Discounted Cumulative Gain)**: Measures ranking quality
-- **MAP (Mean Average Precision)**: Evaluates precision at different recall levels
-- **MRR (Mean Reciprocal Rank)**: Measures position of first relevant result
-
-## Command Line Interface
-
-Evaluate search results directly from the command line:
-
-```bash
-python -m pinecone_evals.cli --api-key YOUR_API_KEY --queries queries.json --hits hits.json --output results.json
-```
-
-## License
-
-See the LICENSE file for details.

@@ -2,6 +2,7 @@
 <script>
     const chartData = {{ chart_data|tojson }};
     const colorMap = {{ color_map|tojson }};
+    const resultsData = {{ results|tojson }};
     
     // Tab switching functionality
     function showTab(tabName) {
@@ -26,6 +27,139 @@
     function toggleQueryDetails(queryId) {
         const detailsEl = document.getElementById(queryId);
         detailsEl.classList.toggle('hidden');
+    }
+    
+    // Sort documents in a query results panel
+    function sortDocuments(queryId, sortBy) {
+        const docsContainer = document.getElementById(`${queryId}-docs`);
+        const docs = Array.from(docsContainer.children);
+        
+        docs.sort((a, b) => {
+            if (sortBy === 'position') {
+                return parseInt(a.dataset.position) - parseInt(b.dataset.position);
+            } else if (sortBy === 'score') {
+                return parseFloat(b.dataset.score) - parseFloat(a.dataset.score);
+            } else if (sortBy === 'relevance') {
+                return parseFloat(b.dataset.relevance) - parseFloat(a.dataset.relevance);
+            }
+            return 0;
+        });
+        
+        // Remove all docs
+        while (docsContainer.firstChild) {
+            docsContainer.removeChild(docsContainer.firstChild);
+        }
+        
+        // Re-append in sorted order
+        docs.forEach(doc => docsContainer.appendChild(doc));
+    }
+    
+    // Show best results for a specific approach and metric
+    function showBestResults(approachName, queryIndex, metric) {
+        const modal = document.getElementById('best-results-modal');
+        const titleEl = document.getElementById('best-results-title');
+        const contentEl = document.getElementById('best-results-content');
+        
+        // Find the query result
+        if (!resultsData[approachName] || !resultsData[approachName].detailed_results) {
+            contentEl.innerHTML = '<p>No detailed results available</p>';
+            modal.classList.remove('hidden');
+            return;
+        }
+        
+        const result = resultsData[approachName].detailed_results[queryIndex - 1];
+        if (!result) {
+            contentEl.innerHTML = '<p>Query results not found</p>';
+            modal.classList.remove('hidden');
+            return;
+        }
+        
+        // Set title
+        titleEl.textContent = `Best ${metric.toUpperCase()} Results: ${approachName} - "${result.query.text}"`;
+        
+        // Create content
+        let html = `
+            <div class="mb-4">
+                <div class="flex justify-between items-center mb-2">
+                    <h4 class="font-medium">Retrieved Documents</h4>
+                    <div class="flex">
+                        <button class="bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded-l-md text-xs font-medium" 
+                                onclick="sortModalDocuments('position')">Position</button>
+                        <button class="bg-gray-200 hover:bg-gray-300 px-3 py-1 text-xs font-medium"
+                                onclick="sortModalDocuments('score')">Score</button>
+                        <button class="bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded-r-md text-xs font-medium"
+                                onclick="sortModalDocuments('relevance')">Relevance</button>
+                    </div>
+                </div>
+                <div class="space-y-2" id="modal-docs">`;
+        
+        // Add document results
+        if (result.hit_scores && result.hit_scores.length > 0) {
+            result.hit_scores.forEach((hit, idx) => {
+                const isRelevant = hit.relevant;
+                const score = hit.eval_score;
+                let scoreClass = isRelevant ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800";
+                
+                html += `
+                <div class="p-3 ${isRelevant ? 'bg-green-50' : 'bg-gray-50'} rounded-lg" 
+                     data-position="${idx}" 
+                     data-score="${score}"
+                     data-relevance="${hit.relevance || 0}">
+                    <div class="flex justify-between mb-1">
+                        <div class="flex items-center">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-200 text-gray-800 mr-2" title="Position in search results">
+                                #${idx + 1}
+                            </span>
+                            <span class="text-sm font-medium mr-2">ID: ${hit.id || hit.hit_id}</span>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 mr-2" title="Evaluation score (1-4 scale)">
+                                Score: ${score}
+                            </span>
+                            ${isRelevant 
+                              ? '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 mr-2">Relevant</span>' 
+                              : '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 mr-2">Not Relevant</span>'}
+                        </div>
+                        <div></div>
+                    </div>
+                    <p class="text-sm text-gray-700 mt-2">${hit.eval_text}</p>
+                    ${hit.justification ? `
+                    <div class="mt-2 pt-2 border-t border-gray-200">
+                        <p class="text-xs text-gray-500 font-medium">Justification:</p>
+                        <p class="text-sm text-gray-700">${hit.justification}</p>
+                    </div>` : ''}
+                </div>`;
+            });
+        } else {
+            html += '<p>No document results available</p>';
+        }
+        
+        html += `</div></div>`;
+        contentEl.innerHTML = html;
+        modal.classList.remove('hidden');
+    }
+    
+    // Sort documents in the modal
+    function sortModalDocuments(sortBy) {
+        const docsContainer = document.getElementById('modal-docs');
+        const docs = Array.from(docsContainer.children);
+        
+        docs.sort((a, b) => {
+            if (sortBy === 'position') {
+                return parseInt(a.dataset.position) - parseInt(b.dataset.position);
+            } else if (sortBy === 'score') {
+                return parseFloat(b.dataset.score) - parseFloat(a.dataset.score);
+            } else if (sortBy === 'relevance') {
+                return parseFloat(b.dataset.relevance) - parseFloat(a.dataset.relevance);
+            }
+            return 0;
+        });
+        
+        // Remove all docs
+        while (docsContainer.firstChild) {
+            docsContainer.removeChild(docsContainer.firstChild);
+        }
+        
+        // Re-append in sorted order
+        docs.forEach(doc => docsContainer.appendChild(doc));
     }
     
     // Create shared legend
@@ -62,7 +196,7 @@
                 tooltip: {
                     callbacks: {
                         label: function(context) {
-                            return `${context.dataset.label}: ${context.parsed.x.toFixed(4)}`;
+                            return `${context.formattedValue}`;
                         }
                     }
                 }
@@ -106,9 +240,9 @@
             type: 'bar',
             data: {
                 labels: chartData.ndcg.labels,
-                datasets: createDatasets('ndcg', 'NDCG Score')
+                datasets: createDatasets('ndcg', 'Score')
             },
-            options: getChartOptions('ndcg', 'NDCG Performance')
+            options: getChartOptions('ndcg', 'NDCG')
         });
         
         // Create MAP chart
@@ -116,9 +250,9 @@
             type: 'bar',
             data: {
                 labels: chartData.map.labels,
-                datasets: createDatasets('map', 'MAP Score')
+                datasets: createDatasets('map', 'Score')
             },
-            options: getChartOptions('map', 'MAP Performance')
+            options: getChartOptions('map', 'MAP')
         });
         
         // Create MRR chart
@@ -126,9 +260,9 @@
             type: 'bar',
             data: {
                 labels: chartData.mrr.labels,
-                datasets: createDatasets('mrr', 'MRR Score')
+                datasets: createDatasets('mrr', 'Score')
             },
-            options: getChartOptions('mrr', 'MRR Performance')
+            options: getChartOptions('mrr', 'MRR')
         });
     });
 </script>

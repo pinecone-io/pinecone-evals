@@ -1,17 +1,12 @@
-{% macro hit_score(score, hit_position=None) %}
-{% set color_class = "" %}
-{% if score >= 0.8 %}
+{% macro hit_score(score, is_relevant=false, hit_position=None) %}
+{% if is_relevant %}
     {% set color_class = "bg-green-100 text-green-800" %}
-{% elif score >= 0.5 %}
-    {% set color_class = "bg-blue-100 text-blue-800" %}
-{% elif score >= 0.1 %}
-    {% set color_class = "bg-yellow-100 text-yellow-800" %}
 {% else %}
     {% set color_class = "bg-red-100 text-red-800" %}
 {% endif %}
 
 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ color_class }}">
-    {% if hit_position is not none %}{{ hit_position + 1 }}. {% endif %}{{ "%.2f"|format(score) }}
+    {% if hit_position is not none %}{{ hit_position + 1 }}.{% endif %} {{ score }}
 </span>
 {% endmacro %}
 
@@ -36,14 +31,47 @@
     <div id="{{ approach_name }}-query-{{ loop.index }}" class="px-4 py-3 border-t hidden">
         <div class="mb-4">
             <h5 class="font-medium text-sm mb-1">Retrieved Documents</h5>
-            <div class="space-y-2">
+            <div class="mt-2 mb-3">
+                <div class="flex">
+                    <button class="bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded-l-md text-xs font-medium" 
+                            onclick="sortDocuments('{{ approach_name }}-query-{{ loop.index }}', 'position')">Position</button>
+                    <button class="bg-gray-200 hover:bg-gray-300 px-3 py-1 text-xs font-medium"
+                            onclick="sortDocuments('{{ approach_name }}-query-{{ loop.index }}', 'score')">Score</button>
+                    <button class="bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded-r-md text-xs font-medium"
+                            onclick="sortDocuments('{{ approach_name }}-query-{{ loop.index }}', 'relevance')">Relevance</button>
+                </div>
+            </div>
+            <div class="space-y-2" id="{{ approach_name }}-query-{{ loop.index }}-docs">
                 {% for hit in result.hit_scores %}
-                <div class="p-3 bg-gray-50 rounded-lg">
+                {% set is_relevant = hit.relevant if hit.relevant is defined else false %}
+                <div class="p-3 {% if is_relevant %}bg-green-50{% else %}bg-gray-50{% endif %} rounded-lg" 
+                     data-position="{{ loop.index0 }}" 
+                     data-score="{{ hit.eval_score }}"
+                     data-relevance="{{ 1 if is_relevant else 0 }}">
                     <div class="flex justify-between mb-1">
-                        <span class="text-sm font-medium">{{ hit.hit_id }}</span>
-                        {{ hit_score(hit.eval_score / 4.0, loop.index0) }}
+                        <div class="flex items-center">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-200 text-gray-800 mr-2" title="Position in search results">
+                                #{{ loop.index0 + 1 }}
+                            </span>
+                            <span class="text-sm font-medium mr-2">ID: {{ hit.id if hit.id is defined else hit.hit_id }}</span>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 mr-2" title="Evaluation score (1-4 scale)">
+                                Score: {{ hit.eval_score }}
+                            </span>
+                            {% if is_relevant %}
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 mr-2">Relevant</span>
+                            {% else %}
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 mr-2">Not Relevant</span>
+                            {% endif %}
+                        </div>
+                        <div></div>
                     </div>
-                    <p class="text-sm text-gray-700">{{ hit.eval_text }}</p>
+                    <p class="text-sm text-gray-700 mt-2">{{ hit.eval_text }}</p>
+                    {% if hit.justification is defined and hit.justification %}
+                    <div class="mt-2 pt-2 border-t border-gray-200">
+                        <p class="text-xs text-gray-500 font-medium">Justification:</p>
+                        <p class="text-sm text-gray-700">{{ hit.justification }}</p>
+                    </div>
+                    {% endif %}
                 </div>
                 {% endfor %}
             </div>

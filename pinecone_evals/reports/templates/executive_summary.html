@@ -2,10 +2,27 @@
 <div class="bg-white rounded-lg shadow p-6 mb-8">
     <h2 class="text-xl font-semibold mb-4">Executive Summary</h2>
     
+    <!-- Metric explanation -->
+    <div class="bg-blue-50 p-4 rounded-lg mb-4">
+        <h3 class="text-md font-medium mb-2">Metrics Explained:</h3>
+        <ul class="text-sm space-y-1">
+            <li><span class="font-medium">NDCG (Normalized Discounted Cumulative Gain):</span> Measures ranking quality considering relevance and position (1.0 is perfect)</li>
+            <li><span class="font-medium">MAP (Mean Average Precision):</span> Measures precision across all relevant documents (1.0 is perfect)</li>
+            <li><span class="font-medium">MRR (Mean Reciprocal Rank):</span> Measures how high the first relevant result appears (1.0 means always first)</li>
+        </ul>
+    </div>
+    
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         {% for metric_name, metric_data in comparison.items() %}
         <div class="bg-gray-50 p-4 rounded-lg">
-            <h3 class="text-lg font-medium mb-2">{{ metric_name | upper }}</h3>
+            <h3 class="text-lg font-medium mb-2">
+                {{ metric_name | upper }}
+                <span class="inline-block" title="{% if metric_name == 'ndcg' %}Normalized Discounted Cumulative Gain - Measures ranking quality considering relevance and position{% elif metric_name == 'map' %}Mean Average Precision - Measures precision across all relevant documents{% elif metric_name == 'mrr' %}Mean Reciprocal Rank - Measures how high the first relevant result appears{% endif %}">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline text-gray-500" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                    </svg>
+                </span>
+            </h3>
             <p class="mb-2">Best Approach: <span class="font-semibold">{{ metric_data.best_approach }}</span></p>
             <p>Score: <span class="font-semibold">{{ "%.4f"|format(metric_data.best_value) }}</span></p>
             

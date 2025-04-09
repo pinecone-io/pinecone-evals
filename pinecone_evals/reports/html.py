@@ -27,7 +27,17 @@ def generate_html_report(
     env = Environment(loader=FileSystemLoader(template_dir))
 
     # Add custom filter to convert Python objects to JSON strings
-    env.filters["tojson"] = lambda obj: json.dumps(obj)
+    def json_serializer(obj):
+        """Handle dataclasses and other custom types."""
+        import dataclasses
+        if dataclasses.is_dataclass(obj):
+            return dataclasses.asdict(obj)
+        elif hasattr(obj, "__dict__"):
+            return obj.__dict__
+        else:
+            return str(obj)
+            
+    env.filters["tojson"] = lambda obj: json.dumps(obj, default=json_serializer)
 
     # Prepare data for charts
     chart_data = _prepare_chart_data(results)
@@ -124,6 +134,7 @@ def _prepare_best_approaches(results: Dict[str, Any]) -> List[Dict[str, Any]]:
         for metric in ["ndcg", "map", "mrr"]:
             best_score = -1
             best_approach = ""
+            best_results = None
 
             for approach in approaches:
                 if "detailed_results" not in results[approach]:
@@ -134,8 +145,13 @@ def _prepare_best_approaches(results: Dict[str, Any]) -> List[Dict[str, Any]]:
                 if approach_score > best_score:
                     best_score = approach_score
                     best_approach = approach
+                    best_results = results[approach]["detailed_results"][i]
 
-            query_data[metric] = {"approach": best_approach, "score": best_score}
+            query_data[metric] = {
+                "approach": best_approach,
+                "score": best_score,
+                "results": best_results if best_results else None,
+            }
 
         best_approaches.append(query_data)
 

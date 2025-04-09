@@ -37,7 +37,7 @@ class EvalPassage:
     index: int
     hit_id: str
     eval_score: int  # 1-4 score
-    relevant: bool  # True if score >= 3
+    relevant: bool
     eval_text: str
     fields: Dict[str, Any]
     justification: Optional[str] = None
