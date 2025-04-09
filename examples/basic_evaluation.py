@@ -33,11 +33,11 @@ def main():
     # Print the evaluation metrics
     print("Evaluation Metrics:")
     for metric_name, metric_values in results["metrics"].items():
-        print(f"  {metric_name}: {metric_values['mean']:.4f}")
+        print(f"  {metric_name}: {metric_values['mean']:.2f}")
 
     # Generate a report
-    report = evaluator.generate_report("basic_evaluation_report.md")
-    print(f"\nReport generated and saved to basic_evaluation_report.md")
+    report = evaluator.generate_report("basic_evaluation_report.html", format="html")
+    print(f"\nReport generated and saved to basic_evaluation_report.html")
 
 
 def mock_search(query: Query) -> SearchResult:
