@@ -12,6 +12,7 @@ from .models import (
     SearchResult,
     EvalPassage,
     EvalSearch,
+    SearchHit
 )
 
 __version__ = "0.1.0"
@@ -24,5 +25,5 @@ __all__ = [
     "SearchResult",
     "EvalSearch",
     "EvalPassage",
-    "HitScore",
+    "SearchHit",
 ]

@@ -69,10 +69,12 @@ To evaluate your own Pinecone-based search system:
 from pinecone_evals import Query, SearchHit, SearchResult
 from pinecone import Pinecone
 
+pc = Pinecone(api_key="your_api_key")
+index = pc.Index("your-index-name")
+
+    
 def pinecone_search(query: Query) -> SearchResult:
     # Initialize Pinecone and connect to your index
-    pc = Pinecone(api_key="your_api_key")
-    index = pc.Index("your-index-name")
     
     # Search the index
     results = index.search_records(query={"inputs": {"text": query.text}})
@@ -103,6 +105,8 @@ from pinecone_evals import PineconeEval, SearchEvaluator
 
 evaluator = SearchEvaluator(PineconeEval(api_key="your_api_key"))
 evaluator.evaluate_approach("my_pinecone_search", pinecone_search, test_queries)
+
+evaluator.generate_report("run_evals.html", format="html")
 ```
 
 For a complete working example, see [examples/custom_search_template.py](examples/custom_search_template.py)
