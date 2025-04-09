@@ -21,6 +21,12 @@ cd pinecone-evals
 pip install -e .
 ```
 
+Or install from GitHub without cloning:
+
+```bash
+pip install git+https://github.com/pinecone-io/pinecone-evals.git
+```
+
 ## Quick Start
 
 ```python
