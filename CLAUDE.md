@@ -3,12 +3,12 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Commands
-- Build/Install: `pip install -e .`
-- Run: `python main.py`
-- Lint: `ruff check .`
-- Format: `ruff format .`
-- Test: `pytest`
-- Single test: `pytest tests/path_to_test.py::test_name`
+- Build/Install: `uv pip install -e .`
+- Run: `uv run python main.py`
+- Lint: `uv run ruff check .`
+- Format: `uv run ruff format .`
+- Test: `uv run pytest`
+- Single test: `uv run pytest tests/path_to_test.py::test_name`
 
 ## Code Style
 - **Formatting**: Follow PEP 8, use ruff formatter
