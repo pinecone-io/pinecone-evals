@@ -136,7 +136,7 @@ For an example of comparing approaches see [examples/compare_approaches.py](exam
 
 ## Using the Eval API Directly
 
-The library uses Pinecone's evaluation API to assess search results:
+You can also use the Eval API directly to evaluate your search results. This is useful for more advanced use cases or if you want to integrate the evaluation into an existing workflow.
 
 ### Request
 
