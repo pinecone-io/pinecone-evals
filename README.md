@@ -121,6 +121,8 @@ test_queries = [
 
 3. Evaluate your search implementation:
 
+Two types of reports are supported, `markdown` and `html`. The `markdown` report is a simple text file, while the `html` report is interactive and can be viewed in a web browser.
+
 ```python
 from pinecone_evals import PineconeEval, SearchEvaluator
 
@@ -130,7 +132,7 @@ evaluator.evaluate_approach("my_pinecone_search", pinecone_search, test_queries)
 evaluator.generate_report("run_evals.html", format="html")
 ```
 
-For a complete working example, see [examples/custom_search_template.py](examples/custom_search_template.py)
+For an example of comparing approaches see [examples/compare_approaches.py](examples/compare_approaches.py)
 
 ## Using the Eval API Directly
 
