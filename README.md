@@ -2,17 +2,17 @@
 
 Experimental Python client for Pinecone Evaluation API
 > **⚠️ Beta Warning**  
-> This library is currently in beta. APIs may change and stability is not guaranteed. Use in production environments at your own risk.
+> The API & SDK are in Early Access. APIs may change and stability is not guaranteed. Use in production environments at your own risk.
 
 ## Overview
 
-The Pinecone Evals library allows you to evaluate and compare different search configurations using standardized metrics. It provides a simple, intuitive interface for:
+The Pinecone Evals sdk allows you to evaluate and compare different search configurations using standardized metrics. It provides a simple, intuitive interface for:
 
 - Creating search profiles with different configurations
 - Evaluating those profiles with test queries
 - Comparing performance metrics to identify optimal settings
 
-The library calculates the following metrics:
+The sdk calculates the following metrics:
 
 - **NDCG (Normalized Discounted Cumulative Gain)**: Measures ranking quality
 - **MAP (Mean Average Precision)**: Evaluates precision at different recall levels
@@ -20,7 +20,7 @@ The library calculates the following metrics:
 
 ## Report Visualization
 
-The library generates interactive HTML reports comparing different search approaches:
+The sdk generates reports in either markdown or html `format`. HTML is recommended for interactive exploration of results.
 
 ![Evaluation Report](docs/report-screenshot.png)
 
