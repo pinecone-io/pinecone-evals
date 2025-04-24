@@ -98,7 +98,7 @@ def pinecone_search(query: Query) -> SearchResult:
     # Initialize Pinecone and connect to your index
 
     # Search the index
-    results = index.search_records(query={"inputs": {"text": query.text}})
+    results = index.search_records(query={"inputs": {"text": query.text,top_k=10}},namespace='sample-namespace')
 
     # Format results as SearchHit objects
     hits = []
